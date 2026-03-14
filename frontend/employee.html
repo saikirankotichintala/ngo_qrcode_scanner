@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>Employee Registration</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <button id="backToAdmin" type="button" class="secondary small">Back to Dashboard</button>
+
+        <h1>Employee Registration</h1>
+        <p class="subtitle">Add artisan profile details</p>
+
+        <form id="employeeForm" class="stack">
+            <label for="employeeName">Employee Name</label>
+            <input type="text" id="employeeName" required>
+
+            <label for="employeeStory">Story</label>
+            <textarea id="employeeStory" rows="4" spellcheck="true" required></textarea>
+
+            <div class="agent-box">
+                <p class="agent-title">AI Story Assistant</p>
+                <p class="agent-help">Generate a strong story or fix spelling and grammar before saving.</p>
+                <div class="agent-actions">
+                    <button id="generateStoryBtn" type="button" class="secondary">Generate Story with AI</button>
+                    <button id="improveStoryBtn" type="button" class="secondary">Fix &amp; Improve Story</button>
+                </div>
+            </div>
+
+            <button type="submit">Save Employee</button>
+        </form>
+
+        <p id="statusMsg" class="status"></p>
+
+        <h2>Registered Employees</h2>
+        <ul id="employeeList" class="item-list"></ul>
+    </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/employee.js" defer></script>
+</body>
+</html>
+
+
+
+

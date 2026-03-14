@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>Team Details</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page">
+    <section class="card soft">
+        <button id="backToAdmin" type="button" class="secondary small">Back to Dashboard</button>
+
+        <h2>Employee and Volunteer Details</h2>
+
+        <div class="team-summary">
+            <p><strong>Employees:</strong> <span id="employeeCount">0</span></p>
+            <p><strong>Volunteers:</strong> <span id="volunteerCount">0</span></p>
+        </div>
+
+        <div class="team-columns">
+            <div>
+                <h3>Employee Information</h3>
+
+                <div class="filter-grid">
+                    <input
+                        type="text"
+                        id="employeeSearchInput"
+                        placeholder="Search by worker ID or name"
+                        aria-label="Search employees"
+                    >
+                    <input type="date" id="employeeFromDate" aria-label="Employee from date">
+                    <input type="date" id="employeeToDate" aria-label="Employee to date">
+                    <button id="resetEmployeeFilters" type="button" class="secondary filter-reset-btn">Reset</button>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                        <tr>
+                            <th>Worker ID</th>
+                            <th>Name</th>
+                            <th>Story</th>
+                            <th>Added</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="employeeDetails"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3>Volunteers</h3>
+                <ul id="volunteerDetails" class="item-list"></ul>
+            </div>
+        </div>
+
+        <p id="teamStatus" class="status"></p>
+    </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/team.js" defer></script>
+</body>
+</html>
+
+
+
+
