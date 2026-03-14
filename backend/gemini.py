@@ -8,6 +8,7 @@ from config import GROQ_API_KEY, GROQ_MODEL
 from helpers import clean_text, error_response, parse_request_data
 
 gemini_bp = Blueprint("gemini", __name__)
+GROQ_USER_AGENT = "ngo-qrcode-scanner/1.0"
 
 
 def extract_groq_text(payload):
@@ -25,6 +26,26 @@ def extract_groq_text(payload):
             collected.append(text)
 
     return "\n".join(collected).strip()
+
+
+def parse_groq_http_error(error):
+    raw = error.read().decode("utf-8", errors="ignore")
+    message = clean_text(raw)
+    if message:
+        try:
+            error_payload = json.loads(raw)
+            message = clean_text(error_payload.get("error", {}).get("message")) or message
+        except ValueError:
+            pass
+
+    if "error code: 1010" in raw.lower():
+        return (
+            "Groq request was blocked by edge security (HTTP 403 / code 1010). "
+            "Retry from a trusted network and avoid proxy/VPN. "
+            "If it persists, contact Groq support with your source IP."
+        )
+
+    return message or str(error)
 
 
 def generate_story_with_groq(name, story, mode):
@@ -67,6 +88,8 @@ def generate_story_with_groq(name, story, mode):
         data=body,
         headers={
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": GROQ_USER_AGENT,
             "Authorization": f"Bearer {GROQ_API_KEY}",
         },
         method="POST",
@@ -76,17 +99,7 @@ def generate_story_with_groq(name, story, mode):
         with urllib.request.urlopen(req, timeout=30) as response:
             groq_payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
-        raw = error.read().decode("utf-8", errors="ignore")
-        message = clean_text(raw)
-        if message:
-            try:
-                error_payload = json.loads(raw)
-                message = (
-                    clean_text(error_payload.get("error", {}).get("message")) or message
-                )
-            except ValueError:
-                pass
-        message = message or str(error)
+        message = parse_groq_http_error(error)
         raise RuntimeError(f"Groq request failed: {message}") from error
     except urllib.error.URLError as error:
         raise RuntimeError(f"Could not reach Groq service: {error.reason}") from error
