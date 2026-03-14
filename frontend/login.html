@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>NGO QR Tracker - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <img class="logo" src="assets/logo.png" alt="Amarswaroop Foundation logo" onerror="this.style.display='none'">
+        <h1>Amarswaroop Foundation</h1>
+        <p class="subtitle">QR Product Tracking System</p>
+
+        <form id="loginForm" class="stack">
+            <label for="username">Username</label>
+            <input type="text" id="username" autocomplete="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" autocomplete="current-password" required>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <p id="errorMsg" class="status"></p>
+
+        <div class="hint-box">
+            <p><strong>Demo Users</strong></p>
+            <p>admin / 1234</p>
+            <p>volunteer / 1234</p>
+        </div>
+    </section>
+</main>
+
+<script src="js/login.js" defer></script>
+</body>
+</html>
+
+
+
+

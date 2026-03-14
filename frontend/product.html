@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>Product Registration</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <button id="backToAdmin" type="button" class="secondary small">Back to Dashboard</button>
+
+        <h1>Product Registration</h1>
+        <p class="subtitle"><em>Create a bag and generate an impact QR code</em></p>
+
+        <form id="productForm" class="stack">
+            <label for="employeeSelect">Select Employee(s)</label>
+            <select id="employeeSelect" required multiple size="6">
+                <option value="">Loading employees...</option>
+            </select>
+            <p class="muted helper-text">Select one or more employees who made this bag.</p>
+
+            <label for="materialUsed">Material Used</label>
+            <input type="text" id="materialUsed" placeholder="Cotton, Jute, Denim..." required>
+
+            <p class="input-source-title">Product Image Source</p>
+            <div class="input-choice-group" role="radiogroup" aria-label="Product image source">
+                <label class="choice-option">
+                    <input type="radio" name="productImageSource" id="sourceLocalStorage" value="gallery" checked>
+                    <span>Local Storage</span>
+                </label>
+                <label class="choice-option">
+                    <input type="radio" name="productImageSource" id="sourceCamera" value="camera">
+                    <span>Camera</span>
+                </label>
+            </div>
+
+            <div id="galleryInputGroup">
+                <label for="productImageGallery">Upload Product Image (Local Storage)</label>
+                <input type="file" id="productImageGallery" accept="image/*">
+            </div>
+
+            <div id="cameraInputGroup" class="hidden">
+                <p class="muted helper-text camera-help">Allow camera access to capture a live photo.</p>
+                <div class="camera-actions">
+                    <button id="openCameraBtn" type="button" class="secondary">Start Camera</button>
+                    <button id="captureCameraBtn" type="button" class="secondary hidden">Capture Photo</button>
+                    <button id="retakeCameraBtn" type="button" class="secondary hidden">Retake</button>
+                </div>
+
+                <video id="liveCameraPreview" class="camera-preview hidden" autoplay playsinline muted></video>
+
+                <div id="cameraFallbackGroup" class="hidden">
+                    <label for="productImageCamera">Camera Upload (Fallback)</label>
+                    <input type="file" id="productImageCamera" accept="image/*" capture="environment">
+                </div>
+            </div>
+
+            <img id="productImagePreview" class="product-image-preview hidden" alt="Selected product preview">
+
+            <button type="submit">Generate QR</button>
+        </form>
+
+        <p id="statusMsg" class="status"></p>
+
+        <div id="qrSection" class="qr-section hidden">
+            <p class="qr-title">Your Impact QR Is Ready</p>
+            <p class="qr-tagline"><em>Each scan helps share the maker's story and mission.</em></p>
+
+            <div class="qr-frame">
+                <span class="qr-orbit qr-orbit-one" aria-hidden="true"></span>
+                <span class="qr-orbit qr-orbit-two" aria-hidden="true"></span>
+                <img id="qrImage" alt="Generated QR code">
+            </div>
+
+            <a id="bagLink" href="#" target="_blank" rel="noopener noreferrer">Open Bag Details Page</a>
+        </div>
+    </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/product.js" defer></script>
+</body>
+</html>
+
+
+
+

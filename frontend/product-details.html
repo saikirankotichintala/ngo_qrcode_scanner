@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>Product Details</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page">
+    <section class="card soft">
+        <button id="backToAdmin" type="button" class="secondary small">Back to Dashboard</button>
+
+        <h2>Product Details</h2>
+
+        <div class="team-summary">
+            <p><strong>Products:</strong> <span id="productCount">0</span></p>
+            <p><strong>Pending Sync:</strong> <span id="productPendingCount">0</span></p>
+        </div>
+
+        <div class="filter-grid">
+            <input
+                type="text"
+                id="productSearchInput"
+                placeholder="Search by ID, maker or material"
+                aria-label="Search products"
+            >
+            <input type="date" id="productFromDate" aria-label="Product from date">
+            <input type="date" id="productToDate" aria-label="Product to date">
+            <button id="resetProductFilters" type="button" class="secondary filter-reset-btn">Reset</button>
+        </div>
+
+        <p class="muted helper-text">Click a product photo to view its QR code.</p>
+
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Product ID</th>
+                    <th>Maker</th>
+                    <th>Material</th>
+                    <th>Added</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="productDetails"></tbody>
+            </table>
+        </div>
+
+        <div id="qrSection" class="qr-section hidden">
+            <p class="qr-title">Product QR Code</p>
+            <div class="qr-frame">
+                <span class="qr-orbit qr-orbit-one" aria-hidden="true"></span>
+                <span class="qr-orbit qr-orbit-two" aria-hidden="true"></span>
+                <img id="qrImage" alt="Product QR code">
+            </div>
+            <a id="bagLink" href="#" target="_blank" rel="noopener noreferrer">Open Bag Details Page</a>
+        </div>
+
+        <p id="productStatus" class="status"></p>
+    </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/product-details.js" defer></script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="ngo-logo.png">
+    <title>Bag Details</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bag-page">
+<main class="page bag-layout">
+    <section id="bagCard" class="card bag-card is-loading">
+        <div class="bag-hero">
+            <p class="bag-kicker">NGO Impact Trace</p>
+            <h1>Bag Story Card</h1>
+            <p class="subtitle bag-subtitle"><em>Every handmade bag carries a story of dignity, effort, and hope.</em></p>
+        </div>
+
+        <p id="pageMessage" class="status"></p>
+
+        <div class="bag-detail-grid">
+            <article class="bag-detail bag-meta-id">
+                <p class="bag-label">Bag ID</p>
+                <p class="bag-value" id="bagId">-</p>
+            </article>
+
+            <article class="bag-detail bag-meta-maker">
+                <p class="bag-label">Crafted By</p>
+                <p class="bag-value" id="makerName">-</p>
+            </article>
+
+            <article class="bag-detail bag-meta-material">
+                <p class="bag-label">Material</p>
+                <p class="bag-value" id="materialUsed">-</p>
+            </article>
+
+            <article class="bag-detail bag-product-image">
+                <p class="bag-label">Product Preview</p>
+                <img id="productImage" class="bag-product-image-preview hidden" alt="Product">
+                <p id="productImageFallback" class="muted">No product image uploaded.</p>
+            </article>
+
+            <article class="bag-detail bag-story">
+                <p class="bag-label">Employee Story</p>
+                <p id="employeeStory" class="bag-story-text">-</p>
+            </article>
+        </div>
+    </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/bag.js" defer></script>
+</body>
+</html>
+
+
+
+
