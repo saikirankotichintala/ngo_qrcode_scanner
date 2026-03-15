@@ -1,4 +1,4 @@
-const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "https://ngo-qrcode-backend.onrender.com";
+const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "http://127.0.0.1:5000";
 
 let pageMessage;
 let bagCard;
