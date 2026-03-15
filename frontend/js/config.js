@@ -1,4 +1,7 @@
 (function (window) {
+    const DEFAULT_API_BASE_URL = "https://ngo-qrcode-backend.onrender.com";
+    const LOCAL_API_BASE_PATTERN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i;
+
     function normalizeBaseUrl(value) {
         if (!value) {
             return "";
@@ -21,21 +24,17 @@
     }
 
     function inferApiBaseUrl() {
-        const configuredBaseUrl =
-            normalizeBaseUrl(window.NGO_API_BASE_URL) || getStoredApiBaseUrl();
-        if (configuredBaseUrl) {
-            return configuredBaseUrl;
+        const runtimeConfiguredBaseUrl = normalizeBaseUrl(window.NGO_API_BASE_URL);
+        if (runtimeConfiguredBaseUrl) {
+            return runtimeConfiguredBaseUrl;
         }
 
-        const pageLocation = window.location || {};
-        const hostname = pageLocation.hostname;
-        const protocol = pageLocation.protocol === "https:" ? "https:" : "http:";
-
-        if (hostname) {
-            return protocol + "//" + hostname + ":5000";
+        const storedBaseUrl = getStoredApiBaseUrl();
+        if (storedBaseUrl && !LOCAL_API_BASE_PATTERN.test(storedBaseUrl)) {
+            return storedBaseUrl;
         }
 
-        return "http://127.0.0.1:5000";
+        return DEFAULT_API_BASE_URL;
     }
 
     window.NGO_CONFIG = Object.freeze({

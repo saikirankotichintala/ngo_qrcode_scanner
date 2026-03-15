@@ -1,4 +1,4 @@
-const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "http://127.0.0.1:5000";
+const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "https://ngo-qrcode-backend.onrender.com";
 const PRODUCT_QUEUE_KEY = "ngo_product_registration_queue_v1";
 const MAX_OFFLINE_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
 

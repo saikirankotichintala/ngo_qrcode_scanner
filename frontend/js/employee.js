@@ -1,4 +1,4 @@
-const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "http://127.0.0.1:5000";
+const API_BASE_URL = (window.NGO_CONFIG && window.NGO_CONFIG.API_BASE_URL) || "https://ngo-qrcode-backend.onrender.com";
 const EMPLOYEE_QUEUE_KEY = "ngo_employee_registration_queue_v1";
 
 let employeeForm;
