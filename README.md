@@ -1,135 +1,173 @@
+🌱 NGO QR Code Scanner
+
+A full-stack product tracking system designed for NGOs to bring transparency, storytelling, and impact visibility to handmade products.
+Each bag is connected to the people who made it through a simple QR scan.
+
+✨ Key Highlights
+
+🔗 QR-based storytelling – Scan a product to see who made it
+
+👩‍🏭 Employee identity system with auto-generated IDs
+
+🤖 AI-powered story enhancement using Groq
+
+📦 Product lifecycle tracking
+
+📱 Offline-first support with sync capability
+
 # NGO QR Code Scanner
 
-A full-stack NGO product tracking system that links every handmade bag to employee stories through QR codes.
+A full-stack product-tracking system built for NGOs to increase transparency and impact storytelling. Each product (bag) gets a unique QR code that links to the maker(s), materials, images and an AI-enhanced story.
 
-## Features
+## Highlights
 
-- Employee registration with auto-generated `worker_id` values.
-- AI-assisted employee story generation and improvement via Groq.
-- Product (bag) registration with:
-  - Multiple employee selection.
-  - Material tracking.
-  - Product photo upload (local file or camera capture path in UI).
-- Automatic QR code generation for each product.
-- Bag details page that displays maker info, material, image, and stories.
-- Admin product/employee management (edit and delete flows).
-- Offline queue + sync for employee and product submissions in the frontend.
-- Role-based frontend routes (`admin`, `volunteer`).
+- QR-driven storytelling: scan a product to immediately see its journey and maker profile.
+- Employee identity system (auto-generated worker_id) and role-based access (admin / volunteer).
+- AI-assisted story generation and enhancements (Groq / LLaMA model integration).
+- Product lifecycle management with offline-first frontend sync.
 
-## Tech Stack
+## Tech stack
 
-- Backend: Flask, PyMongo, python-dotenv, qrcode
-- Frontend: React, React Router, Vite
+- Backend: Flask, PyMongo, python-dotenv
+- Frontend: React + Vite
 - Database: MongoDB
+- AI: Groq (LLaMA 3.x)
 
-## Project Structure
+## Repository layout
 
-```text
+```
 ngo_qrcode_scanner/
-|-- backend/
-|   |-- app.py
-|   |-- employee.py
-|   |-- product.py
-|   |-- bag.py
-|   |-- gemini.py
-|   |-- db.py
-|   |-- config.py
-|   `-- requirements.txt
-|-- frontend/
-|   |-- src/
-|   |-- package.json
-|   `-- vite.config.js
-`-- README.md
+├─ backend/         # Flask API and server-side code
+├─ frontend/        # React app (Vite)
+└─ README.md
 ```
 
-## Prerequisites
+## Quickstart (macOS)
+
+These steps get both backend and frontend running locally.
+
+Prerequisites:
 
 - Python 3.10+
-- Node.js 18+ and npm
-- MongoDB Atlas (or local MongoDB)
+- Node.js 18+
+- MongoDB (local or Atlas)
 
-## Backend Setup
+1) Backend
 
-```powershell
+```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Create `backend/.env`:
+Create a `.env` file in `backend/` with the variables below (replace values):
 
-```env
+```
 MONGO_URI=your_mongodb_connection_string
 MONGO_DB_NAME=ngo_db
-
-# Optional but recommended for AI story assistant
 GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.1-8b-instant
-
-# Optional, used for URL generation
 API_BASE_URL=http://127.0.0.1:5000
 FRONTEND_BASE_URL=http://127.0.0.1:5173
 ```
 
-Run backend:
+Run the backend server:
 
-```powershell
+```bash
 python app.py
 ```
 
-Backend default URL: `http://127.0.0.1:5000`
+2) Frontend
 
-## Frontend Setup
-
-```powershell
+```bash
 cd frontend
-cmd /c npm install
-cmd /c npm run dev
+npm install
+npm run dev
 ```
 
-Frontend default URL: `http://127.0.0.1:5173/#/login`
+Open the app: http://127.0.0.1:5173/#/login
 
-Demo credentials:
+## API summary
 
-- `admin / 1234`
-- `volunteer / 1234`
+Note: Admin-only routes expect header `X-User-Role: admin`.
 
-## API Endpoints
+- Employee
+	- POST /create-employee
+	- GET /employees
+	- PUT /employee/<id> (admin)
+	- DELETE /employee/<id> (admin)
 
-- `GET /` - Backend health message.
-- `POST /create-employee` - Create employee (`name`, `story`).
-- `GET /employees` - List employees.
-- `PUT /employee/<employee_id>` - Update employee (admin role required).
-- `DELETE /employee/<employee_id>` - Delete employee (admin role required).
-- `POST /ai/story` - Generate or improve employee story using Groq.
-- `POST /create-bag` - Create bag/product and QR code.
-- `GET /all-bags` - List all bags.
-- `GET /bag/<bag_id>` - Get bag details.
-- `PUT /bag/<bag_id>` - Update bag material/image (admin role required).
-- `DELETE /bag/<bag_id>` - Delete bag, related QR, and image (admin role required).
-- `GET /qr/<filename>` - Serve QR image.
-- `GET /product-image/<filename>` - Serve uploaded product image.
+- Product / Bag
+	- POST /create-bag
+	- GET /all-bags
+	- GET /bag/<id>
+	- PUT /bag/<id> (admin)
+	- DELETE /bag/<id> (admin)
 
-Admin-only backend operations are enforced using the `X-User-Role: admin` request header.
+- AI
+	- POST /ai/story  — generate or enhance a story for an employee/product
 
-## Validation Status
+- Assets
+	- GET /qr/<filename>
+	- GET /product-image/<filename>
 
-Current project checks completed:
+## Demo credentials
 
-- Backend Python files compile successfully.
-- Frontend production build (`npm run build`) succeeds.
+Use these for local dev only (do not use in production):
+
+- Admin: admin / 1234
+- Volunteer: volunteer / 1234
+
+## Environment variables (backend)
+
+- MONGO_URI — MongoDB connection string
+- MONGO_DB_NAME — database name
+- GROQ_API_KEY — API key for Groq AI
+- GROQ_MODEL — model name to use
+- API_BASE_URL — backend URL
+- FRONTEND_BASE_URL — frontend URL used in CORS or links
+
+## Development notes
+
+- Role-based protection is implemented using the `X-User-Role` header in routes. Replace with proper auth (JWT/OAuth) before production.
+- Image/QR uploads are served from backend asset endpoints. Ensure write permissions in the upload directory.
 
 ## Troubleshooting
 
-- If you see `'vite' is not recognized`, run `cmd /c npm install` inside `frontend`.
-- If PowerShell blocks npm scripts (`npm.ps1 cannot be loaded`), use `cmd /c npm ...`.
-- If AI calls fail with `Groq request failed: error code: 1010`, avoid VPN/proxy and retry from a trusted network.
-- If backend fails at startup with `MONGO_URI is missing in .env`, verify `backend/.env`.
+- 'vite' not recognized: run `npm install` in `frontend/`.
+- Groq errors (e.g. 1010): check network, VPN/proxy or expired API key.
+- Mongo connection errors: verify `MONGO_URI` and that MongoDB is reachable.
 
-## Security Notes
+## Security & production checklist
 
-- Do not commit `backend/.env` or API keys.
-- Replace demo credentials with real authentication before production.
-- Rotate exposed API keys immediately if they were shared or pushed accidentally.
+- Never commit `.env` or secrets to git.
+- Replace demo credentials and enable proper authentication.
+- Use HTTPS and secure cookies in production.
+- Rotate API keys if exposed.
 
+## Roadmap / Future enhancements
+
+- Payment integration and direct purchases
+- Analytics dashboard (impact tracking)
+- Multi-language support for stories
+- Mobile app wrapper / PWA improvements
+
+## Contributing
+
+Contributions are welcome. Open an issue or submit a PR with a clear description of the change. For larger items, please open an issue first so we can discuss design and scope.
+
+## License
+
+Specify your license here (e.g. MIT) or add a LICENSE file.
+
+---
+
+If you'd like, I can add:
+
+- Badges (CI, license, coverage)
+- Screenshots or a short demo GIF
+- A diagram showing the architecture and data flow
+
+If you want me to make any of those additions now, tell me which and I'll add them.
