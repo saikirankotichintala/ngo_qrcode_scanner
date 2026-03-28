@@ -70,11 +70,7 @@ export default function App() {
       />
       <Route
         path="/bag"
-        element={
-          <ProtectedRoute roles={["admin", "volunteer"]}>
-            <BagPage />
-          </ProtectedRoute>
-        }
+        element={<BagPage />}
       />
       <Route
         path="/traceability"

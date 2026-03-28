@@ -136,7 +136,7 @@ def create_bag():
     bags_collection.insert_one(dict(bag))
 
     frontend_base_url = infer_frontend_base_url()
-    bag_url = f"{frontend_base_url}/bag.html?id={bag_id}"
+    bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
     qr_filename = f"{bag_id}.png"
     qr_file_path = QR_DIR / qr_filename
     qrcode.make(bag_url).save(qr_file_path)
