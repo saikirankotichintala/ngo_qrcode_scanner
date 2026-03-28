@@ -1062,6 +1062,81 @@ body.bag-page::after {
     }
 }
 
+.trace-network-pill {
+    margin: 4px 0 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.01em;
+}
+
+.trace-network-pill.online {
+    background: #d8f0df;
+    color: #215437;
+}
+
+.trace-network-pill.offline {
+    background: #fff3dc;
+    color: #7a4d14;
+}
+
+.trace-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.trace-summary-grid p {
+    margin: 0;
+    background: #fff;
+    border: 1px solid #d7e7da;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.88rem;
+}
+
+.trace-form {
+    border: 1px solid #d8e7db;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: linear-gradient(145deg, #f8fcf9 0%, #f0f7f2 100%);
+}
+
+.trace-form h3 {
+    margin: 0 0 4px;
+    font-size: 0.96rem;
+}
+
+.trace-log-list {
+    margin-top: 8px;
+    border: 1px solid #d7e7da;
+    border-radius: 12px;
+    padding: 10px;
+    background: #f8fbf9;
+}
+
+.trace-log-item {
+    margin: 0 0 6px;
+    font-size: 0.84rem;
+}
+
+.trace-log-item:last-child {
+    margin-bottom: 0;
+}
+
+.trace-log-error {
+    color: var(--danger);
+}
+
+.trace-log-info {
+    color: #2b5739;
+}
+
 @media (min-width: 700px) {
     .filter-grid {
         grid-template-columns: minmax(190px, 1.7fr) minmax(140px, 1fr) minmax(140px, 1fr) auto;

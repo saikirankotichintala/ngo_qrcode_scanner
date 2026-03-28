@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL, buildBagRouteUrl } from "../lib/api";
 import { clearSession, getAuthHeaders, getUserRole } from "../lib/auth";
+import { getCachedEmployees, saveCachedEmployees } from "../lib/employeeCache";
 import { isNetworkError, parseResponse } from "../lib/network";
 
 const PRODUCT_QUEUE_KEY = "ngo_product_registration_queue_v1";
@@ -247,6 +248,7 @@ export default function ProductPage() {
       });
       const data = await parseResponse(response);
       setEmployees(data);
+      saveCachedEmployees(data);
 
       if (!data.length) {
         setStatus("No employees found. Please add employees first.", "warning");
@@ -256,6 +258,16 @@ export default function ProductPage() {
       setStatus("Select one or more employees and create product.", "info");
     } catch (error) {
       if (isNetworkError(error)) {
+        const cachedEmployees = getCachedEmployees();
+        if (cachedEmployees.length) {
+          setEmployees(cachedEmployees);
+          setStatus(
+            `Offline mode: showing ${cachedEmployees.length} cached employee(s).`,
+            "warning"
+          );
+          return;
+        }
+
         setStatus("Offline mode: employee list unavailable.", "warning");
         return;
       }

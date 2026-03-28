@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../lib/api";
 import { getAuthHeaders, getUserRole } from "../lib/auth";
+import { getCachedEmployees, saveCachedEmployees } from "../lib/employeeCache";
 import { isNetworkError, parseResponse } from "../lib/network";
 
 const EMPLOYEE_QUEUE_KEY = "ngo_employee_registration_queue_v1";
@@ -41,6 +42,20 @@ function queueEmployeeForSync(payload) {
 
 function getQueuedEmployeeCount() {
   return getQueuedEmployees().length;
+}
+
+function buildQueuedEmployeesPreview() {
+  return getQueuedEmployees().map((queuedItem, index) => {
+    const payload = queuedItem.payload || {};
+    const name = String(payload.name || "").trim() || "Pending employee";
+    const story = String(payload.story || "").trim();
+    return {
+      id: `queued-${queuedItem.id || index}`,
+      name,
+      story,
+      is_pending_sync: true
+    };
+  });
 }
 
 function buildQueueStatusMessage(syncedCount, skippedDuplicateCount, remainingCount) {
@@ -101,16 +116,35 @@ export default function EmployeePage() {
       });
       const data = await parseResponse(response, "Failed to load employees");
       setEmployees(data);
+      saveCachedEmployees(data);
     } catch (error) {
       if (isNetworkError(error)) {
-        const pendingCount = getQueuedEmployeeCount();
-        if (pendingCount) {
-          setStatus(
-            `Offline mode: ${pendingCount} employee registration(s) pending sync.`,
-            "warning"
-          );
+        const cachedEmployees = getCachedEmployees();
+        const queuedEmployees = buildQueuedEmployeesPreview();
+        const offlineEmployees = [...queuedEmployees, ...cachedEmployees];
+
+        if (offlineEmployees.length) {
+          setEmployees(offlineEmployees);
+
+          if (cachedEmployees.length && queuedEmployees.length) {
+            setStatus(
+              `Offline mode: showing ${cachedEmployees.length} cached and ${queuedEmployees.length} pending employee(s).`,
+              "warning"
+            );
+          } else if (cachedEmployees.length) {
+            setStatus(
+              `Offline mode: showing ${cachedEmployees.length} cached employee(s).`,
+              "warning"
+            );
+          } else {
+            setStatus(
+              `Offline mode: showing ${queuedEmployees.length} pending employee registration(s).`,
+              "warning"
+            );
+          }
           return;
         }
+
         setStatus("Offline mode: unable to load employee list.", "warning");
         return;
       }
@@ -412,9 +446,10 @@ export default function EmployeePage() {
             <li key={employee.id}>
               <p>
                 <strong>{employee.name}</strong>
+                {employee.is_pending_sync ? " (Pending sync)" : ""}
               </p>
               <p className="muted">{employee.story || "No story added."}</p>
-              {userRole === "admin" && (
+              {userRole === "admin" && !employee.is_pending_sync && (
                 <button
                   type="button"
                   className="danger small action-btn"

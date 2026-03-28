@@ -36,6 +36,9 @@ export default function AdminPage() {
           <button type="button" className="secondary" onClick={() => navigate("/team")}>
             Employee &amp; Volunteer Details
           </button>
+          <button type="button" className="secondary" onClick={() => navigate("/traceability")}>
+            Traceability Sync
+          </button>
           <button type="button" className="secondary" onClick={handleLogout}>
             Logout
           </button>

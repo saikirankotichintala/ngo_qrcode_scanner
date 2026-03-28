@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import ProductPage from "./pages/ProductPage";
 import TeamPage from "./pages/TeamPage";
+import TraceabilityPage from "./pages/TraceabilityPage";
 
 function ProtectedRoute({ roles, children }) {
   const role = getUserRole();
@@ -72,6 +73,14 @@ export default function App() {
         element={
           <ProtectedRoute roles={["admin", "volunteer"]}>
             <BagPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/traceability"
+        element={
+          <ProtectedRoute roles={["admin", "volunteer"]}>
+            <TraceabilityPage />
           </ProtectedRoute>
         }
       />
