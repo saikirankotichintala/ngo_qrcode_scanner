@@ -36,6 +36,9 @@ export default function ProductDetailsPage() {
   const [productToDate, setProductToDate] = useState("");
   const [pendingCount, setPendingCount] = useState(getPendingQueueCount());
   const [selectedQrBag, setSelectedQrBag] = useState(null);
+  const [brokenImageByBagId, setBrokenImageByBagId] = useState({});
+  const [isQrPreviewBroken, setIsQrPreviewBroken] = useState(false);
+  const [qrAnimationSeed, setQrAnimationSeed] = useState(0);
   const userRole = getUserRole();
 
   const isAdmin = userRole === "admin";
@@ -89,6 +92,7 @@ export default function ProductDetailsPage() {
       });
       const products = await parseResponse(response);
       setAllProducts(products);
+      setBrokenImageByBagId({});
       setPendingCount(getPendingQueueCount());
       setStatus("Product details updated.", "success");
     } catch (error) {
@@ -213,6 +217,10 @@ export default function ProductDetailsPage() {
   }, [loadProducts]);
 
   useEffect(() => {
+    setIsQrPreviewBroken(false);
+  }, [selectedQrBag?.id]);
+
+  useEffect(() => {
     const handleOnline = () => {
       loadProducts();
     };
@@ -314,12 +322,14 @@ export default function ProductDetailsPage() {
               {filteredProducts.map((bag) => (
                 <tr key={bag.id}>
                   <td>
-                    {bag.product_image_url ? (
+                    {bag.product_image_url && !brokenImageByBagId[bag.id] ? (
                       <button
                         type="button"
                         className="photo-thumb-btn"
                         onClick={() => {
                           setSelectedQrBag(bag);
+                          setQrAnimationSeed((previousSeed) => previousSeed + 1);
+                          setIsQrPreviewBroken(false);
                           setStatus("QR loaded for selected product.", "success");
                         }}
                       >
@@ -327,6 +337,12 @@ export default function ProductDetailsPage() {
                           className="table-product-photo"
                           src={bag.product_image_url}
                           alt={`Product image for ${bag.id || "product"}`}
+                          onError={() => {
+                            setBrokenImageByBagId((prevState) => ({
+                              ...prevState,
+                              [bag.id]: true
+                            }));
+                          }}
                         />
                       </button>
                     ) : (
@@ -371,28 +387,58 @@ export default function ProductDetailsPage() {
           </table>
         </div>
 
-        <div className={`qr-section${selectedQrBag?.id ? " is-visible" : " hidden"}`}>
-          <p className="qr-title">Product QR Code</p>
-          <div className="qr-frame">
-            <span className="qr-orbit qr-orbit-one" aria-hidden="true"></span>
-            <span className="qr-orbit qr-orbit-two" aria-hidden="true"></span>
-            <img
-              alt="Product QR code"
-              src={
-                selectedQrBag?.id
-                  ? `${API_BASE_URL}/qr/${encodeURIComponent(selectedQrBag.id)}.png`
-                  : undefined
-              }
-            />
+        {selectedQrBag?.id ? (
+          <div key={`${selectedQrBag.id}-${qrAnimationSeed}`} className="qr-section is-visible">
+            <p className="qr-title">Product QR Code</p>
+            <p className="qr-tagline">Dynamic secure trace reveal</p>
+            <div className="qr-stage">
+              <div className="qr-logo-cut" aria-hidden="true">
+                <span className="qr-logo-slice qr-logo-left">
+                  <img src="/ngo-logo.png" alt="" />
+                </span>
+                <span className="qr-logo-slice qr-logo-right">
+                  <img src="/ngo-logo.png" alt="" />
+                </span>
+              </div>
+              <div className="qr-frame">
+                <span className="qr-orbit qr-orbit-one" aria-hidden="true"></span>
+                <span className="qr-orbit qr-orbit-two" aria-hidden="true"></span>
+                {!isQrPreviewBroken && (
+                  <img
+                    alt="Product QR code"
+                    src={`${API_BASE_URL}/qr/${encodeURIComponent(selectedQrBag.id)}.png`}
+                    onError={() => {
+                      setIsQrPreviewBroken(true);
+                    }}
+                  />
+                )}
+                {isQrPreviewBroken && (
+                  <p className="muted">QR preview is unavailable for this product.</p>
+                )}
+              </div>
+            </div>
+            <div className="qr-detail-sheet">
+              <p>
+                <strong>ID:</strong> <span className="mono-text">{selectedQrBag.id}</span>
+              </p>
+              <p>
+                <strong>Maker:</strong> <span>{buildMakerNamesText(selectedQrBag)}</span>
+              </p>
+              <p>
+                <strong>Material:</strong> <span>{selectedQrBag.material_used || "-"}</span>
+              </p>
+            </div>
+            <a
+              href={buildBagRouteUrl(selectedQrBag.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Bag Details Page
+            </a>
           </div>
-          <a
-            href={selectedQrBag?.id ? buildBagRouteUrl(selectedQrBag.id) : "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open Bag Details Page
-          </a>
-        </div>
+        ) : (
+          null
+        )}
 
         <p className={`status${statusType ? ` status-${statusType}` : ""}`}>{statusMessage}</p>
       </section>

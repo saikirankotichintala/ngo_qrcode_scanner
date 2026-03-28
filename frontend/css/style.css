@@ -464,7 +464,14 @@ button.action-btn {
     text-align: center;
 }
 
-.qr-section img {
+.qr-stage {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    margin-top: 4px;
+}
+
+.qr-frame > img {
     width: 224px;
     max-width: 100%;
     border-radius: 14px;
@@ -504,6 +511,10 @@ button.action-btn {
     animation: qrReveal 0.62s cubic-bezier(0.2, 0.85, 0.24, 1);
 }
 
+.qr-section.is-visible .qr-frame > img {
+    animation: qrSpinIn 0.8s cubic-bezier(0.22, 0.78, 0.2, 1) both, qrFloat 2.9s ease-in-out infinite 0.82s;
+}
+
 .qr-title {
     margin: 0;
     font-family: var(--font-serif);
@@ -525,6 +536,41 @@ button.action-btn {
     border-radius: 18px;
     border: 1px solid #d2e9d8;
     background: radial-gradient(circle at 50% 20%, rgba(243, 178, 79, 0.2), rgba(216, 240, 223, 0.52) 45%, rgba(255, 255, 255, 0.95) 75%);
+}
+
+.qr-logo-cut {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 5;
+    pointer-events: none;
+    animation: logoCutFade 0.95s ease 0.18s forwards;
+}
+
+.qr-logo-slice {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+}
+
+.qr-logo-slice img {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 16px rgba(21, 87, 43, 0.24));
+    transform-origin: center center;
+}
+
+.qr-logo-left img {
+    clip-path: inset(0 50% 0 0);
+    animation: logoSplitLeft 0.82s cubic-bezier(0.2, 0.84, 0.21, 0.98) 0.08s forwards;
+}
+
+.qr-logo-right img {
+    clip-path: inset(0 0 0 50%);
+    animation: logoSplitRight 0.82s cubic-bezier(0.2, 0.84, 0.21, 0.98) 0.08s forwards;
 }
 
 .qr-orbit {
@@ -549,6 +595,39 @@ button.action-btn {
     border-color: rgba(243, 178, 79, 0.55);
     animation-duration: 14s;
     animation-direction: reverse;
+}
+
+.qr-detail-sheet {
+    margin: 14px auto 0;
+    max-width: 420px;
+    border-radius: 12px;
+    border: 1px solid #d6e7da;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 249, 243, 0.95) 100%);
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.qr-detail-sheet p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.qr-detail-sheet strong {
+    color: #2a4f36;
+}
+
+.qr-section.is-visible .qr-detail-sheet p:nth-child(1) {
+    animation: qrDetailRise 0.42s ease 0.34s forwards;
+}
+
+.qr-section.is-visible .qr-detail-sheet p:nth-child(2) {
+    animation: qrDetailRise 0.42s ease 0.45s forwards;
+}
+
+.qr-section.is-visible .qr-detail-sheet p:nth-child(3) {
+    animation: qrDetailRise 0.42s ease 0.56s forwards;
 }
 
 .hidden {
@@ -995,6 +1074,20 @@ body.bag-page::after {
     }
 }
 
+@keyframes qrSpinIn {
+    from {
+        opacity: 0;
+        transform: rotate(-22deg) scale(0.74);
+        filter: blur(1.5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+        filter: blur(0);
+    }
+}
+
 @keyframes orbitSpin {
     from {
         transform: translate(-50%, -50%) rotate(0deg);
@@ -1002,6 +1095,53 @@ body.bag-page::after {
 
     to {
         transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes logoSplitLeft {
+    from {
+        transform: translateX(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(-34px) rotate(-10deg) scale(0.78);
+        opacity: 0;
+    }
+}
+
+@keyframes logoSplitRight {
+    from {
+        transform: translateX(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(34px) rotate(10deg) scale(0.78);
+        opacity: 0;
+    }
+}
+
+@keyframes logoCutFade {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@keyframes qrDetailRise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
