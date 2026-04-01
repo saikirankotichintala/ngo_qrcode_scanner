@@ -1,5 +1,7 @@
 Flask>=3.0.0
 flask-cors>=5.0.0
 pymongo>=4.9.0
+dnspython>=2.6.1
 python-dotenv>=1.0.0
 qrcode[pil]>=8.0
+gunicorn>=22.0.0

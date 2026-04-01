@@ -1,7 +1,7 @@
 (function (window) {
-    const DEFAULT_PROD_API_BASE_URL = "https://ngo-qrcode-backend.onrender.com";
+    const DEFAULT_PROD_API_BASE_URL = "https://ngo-qrcode-scanner.onrender.com";
     const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
-    const LEGACY_BROKEN_HOSTS = new Set(["ngo-qrcode-scanner.onrender.com"]);
+    const LEGACY_BROKEN_HOSTS = new Set();
 
     function normalizeBaseUrl(value) {
         if (!value) {
