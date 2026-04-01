@@ -92,7 +92,7 @@ export default function BagPage() {
           <p className="subtitle bag-subtitle">
             <em>Every handmade bag carries a story of dignity, effort, and hope.</em>
           </p>
-          <div className="bag-donate-chip" aria-label="Support this mission through donation">
+          <button className="bag-donate-chip" type="button" aria-label="Support this mission through donation">
             <svg
               className="bag-donate-icon"
               viewBox="0 0 24 24"
@@ -103,7 +103,7 @@ export default function BagPage() {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 0 1 6.5 4 5 5 0 0 1 12 7.09 5 5 0 0 1 17.5 4 4.5 4.5 0 0 1 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" />
             </svg>
             <span>Support This Work</span>
-          </div>
+          </button>
         </div>
 
         <p className={`status${statusType ? ` status-${statusType}` : ""}`}>{statusMessage}</p>

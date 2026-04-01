@@ -725,6 +725,7 @@ body.bag-page::after {
 .bag-donate-chip {
     margin: 8px auto 2px;
     display: inline-flex;
+    width: auto;
     align-items: center;
     gap: 7px;
     padding: 7px 11px;
@@ -736,6 +737,13 @@ body.bag-page::after {
     font-weight: 700;
     letter-spacing: 0.01em;
     box-shadow: 0 8px 14px rgba(145, 63, 40, 0.12);
+    cursor: pointer;
+}
+
+.bag-donate-chip:hover {
+    background: linear-gradient(130deg, #ffefea 0%, #ffe3d6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(145, 63, 40, 0.16);
 }
 
 .bag-donate-icon {
