@@ -1,6 +1,7 @@
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
+from pymongo.errors import PyMongoError
 from bag import bag_bp
 from employee import employee_bp
 from gemini import gemini_bp
@@ -15,6 +16,25 @@ def create_app():
     @app.route("/", methods=["GET"])
     def home():
         return jsonify({"message": "NGO QR backend is running"})
+
+    @app.route("/health", methods=["GET"])
+    def health():
+        return jsonify({"status": "ok"})
+
+    @app.errorhandler(PyMongoError)
+    def handle_mongo_error(error):
+        return (
+            jsonify(
+                {
+                    "error": (
+                        "Database connection failed. Check MONGO_URI, Atlas network "
+                        "access, and DNS resolution."
+                    ),
+                    "details": clean_text(error),
+                }
+            ),
+            503,
+        )
 
     app.register_blueprint(employee_bp)
     app.register_blueprint(gemini_bp)

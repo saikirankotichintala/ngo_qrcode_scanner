@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.error
 import urllib.request
 
@@ -38,7 +39,15 @@ def parse_groq_http_error(error):
         except ValueError:
             pass
 
-    if "error code: 1010" in raw.lower():
+    raw_lower = raw.lower()
+
+    if "invalid api key" in raw_lower or "invalid_api_key" in raw_lower:
+        return (
+            "Groq API key is invalid or revoked. Replace GROQ_API_KEY in "
+            "backend/.env with a new key from Groq, then restart the backend."
+        )
+
+    if "error code: 1010" in raw_lower:
         return (
             "Groq request was blocked by edge security (HTTP 403 / code 1010). "
             "Retry from a trusted network and avoid proxy/VPN. "
@@ -46,6 +55,30 @@ def parse_groq_http_error(error):
         )
 
     return message or str(error)
+
+
+def normalize_leading_double_name(name, story_text):
+    safe_name = clean_text(name)
+    safe_story = clean_text(story_text)
+    if not safe_name or not safe_story:
+        return safe_story
+
+    escaped_name = re.escape(safe_name)
+    safe_story = re.sub(
+        rf"^\s*{escaped_name}\s*:\s*{escaped_name}\b[\s,;-]*",
+        f"{safe_name} ",
+        safe_story,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    safe_story = re.sub(
+        rf"^\s*{escaped_name}\s+{escaped_name}\b[\s,;-]*",
+        f"{safe_name} ",
+        safe_story,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    return safe_story.strip()
 
 
 def generate_story_with_groq(name, story, mode):
@@ -57,19 +90,40 @@ def generate_story_with_groq(name, story, mode):
 
     safe_mode = mode if mode in {"generate", "improve"} else "improve"
     system_prompt = (
-        "You write short employee profile stories for an NGO website. "
-        "Always return one polished paragraph in plain English with correct spelling and grammar. "
-        "Keep the tone warm and respectful. "
+        "You are a storytelling assistant for an NGO website. "
+        "Write one short employee profile paragraph in clear, warm, respectful English. "
+        "The paragraph should feel human and grounded, not generic marketing text. "
         "Use 45 to 90 words. "
-        "Do not use markdown. "
-        "Do not invent concrete facts when they are missing; stay generic if needed."
+        "Do not use markdown, bullets, or quotation marks. "
+        "Do not invent facts, numbers, places, or achievements that are not provided."
     )
+
+    if safe_mode == "generate":
+        mode_instruction = (
+            "Create a fresh profile story from the available details. "
+            "If details are limited, keep the story simple and truthful."
+        )
+    else:
+        mode_instruction = (
+            "Improve the draft story by fixing grammar and flow while preserving meaning. "
+            "Keep all factual details consistent with the draft."
+        )
+
+    normalized_story = normalize_leading_double_name(name, story)
+
     user_prompt = (
-        f"Mode: {safe_mode}\n"
-        f"Employee name: {name or 'Not provided'}\n"
-        f"Draft story: {story or 'Not provided'}\n\n"
-        "If mode is generate, create a fresh story from available details. "
-        "If mode is improve, rewrite the draft to fix spelling/grammar and make it flow naturally."
+        "Task:\n"
+        f"{mode_instruction}\n\n"
+        "Inputs:\n"
+        f"- Employee name: {name or 'Not provided'}\n"
+        f"- Draft story: {normalized_story or 'Not provided'}\n\n"
+        "Output rules:\n"
+        "- Return exactly one paragraph.\n"
+        "- Keep it between 45 and 90 words.\n"
+        "- Keep language simple and natural.\n"
+        "- Use the employee name at most once.\n"
+        "- Do not mention missing information.\n"
+        "- Do not add made-up details."
     )
 
     request_payload = {
@@ -108,7 +162,7 @@ def generate_story_with_groq(name, story, mode):
     if not rewritten_story:
         raise RuntimeError("Groq service returned an empty story")
 
-    return rewritten_story
+    return normalize_leading_double_name(name, rewritten_story)
 
 
 @gemini_bp.route("/ai/story", methods=["POST"])
