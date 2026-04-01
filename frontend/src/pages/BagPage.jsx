@@ -34,6 +34,7 @@ export default function BagPage() {
   const [statusType, setStatusType] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isProductImageBroken, setIsProductImageBroken] = useState(false);
 
   const bagId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -82,6 +83,10 @@ export default function BagPage() {
     loadBag();
   }, [bagId]);
 
+  useEffect(() => {
+    setIsProductImageBroken(false);
+  }, [bag?.id, bag?.product_image_url]);
+
   return (
     <main className="page bag-layout">
       <section className={`card bag-card${isLoading ? " is-loading" : ""}${isLoaded ? " is-loaded" : ""}`}>
@@ -127,11 +132,18 @@ export default function BagPage() {
           <article className="bag-detail bag-product-image">
             <p className="bag-label">Product Preview</p>
             <img
-              className={`bag-product-image-preview${bag?.product_image_url ? "" : " hidden"}`}
+              className={`bag-product-image-preview${
+                bag?.product_image_url && !isProductImageBroken ? "" : " hidden"
+              }`}
               src={bag?.product_image_url || undefined}
               alt="Product"
+              onError={() => {
+                setIsProductImageBroken(true);
+              }}
             />
-            {!bag?.product_image_url && <p className="muted">No product image uploaded.</p>}
+            {(!bag?.product_image_url || isProductImageBroken) && (
+              <p className="muted">No product image available.</p>
+            )}
           </article>
 
           <article className="bag-detail bag-story">

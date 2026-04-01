@@ -19,24 +19,38 @@ from helpers import (
 
 product_bp = Blueprint("product", __name__)
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MAX_PRODUCT_IMAGE_BYTES = 8 * 1024 * 1024
 
 
 def save_product_image():
     image_file = request.files.get("product_image")
     if not image_file:
-        return "", None
+        return None, None
 
     original_filename = secure_filename(image_file.filename or "")
     extension = Path(original_filename).suffix.lower()
 
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
-        return "", error_response(
+        return None, error_response(
             "Invalid product image type. Allowed: jpg, jpeg, png, webp, gif"
         )
 
+    image_bytes = image_file.read()
+    if not image_bytes:
+        return None, error_response("Uploaded product image is empty")
+
+    if len(image_bytes) > MAX_PRODUCT_IMAGE_BYTES:
+        return None, error_response("Product image must be 8MB or smaller")
+
     image_filename = f"{uuid.uuid4()}{extension}"
     image_path = PRODUCT_IMAGE_DIR / image_filename
-    image_file.save(image_path)
+    try:
+        image_path.write_bytes(image_bytes)
+    except OSError:
+        return None, error_response(
+            "Unable to save product image on server. Check persistent disk setup."
+        )
+
     return image_filename, None
 
 
@@ -131,6 +145,7 @@ def create_bag():
         "product_image_url": (
             f"{api_base_url}/product-image/{image_filename}" if image_filename else ""
         ),
+        "product_image_name": image_filename,
         "created_at": utc_now(),
     }
 
@@ -161,4 +176,11 @@ def create_bag():
 
 @product_bp.route("/product-image/<path:filename>", methods=["GET"])
 def serve_product_image(filename):
-    return send_from_directory(str(PRODUCT_IMAGE_DIR), filename)
+    safe_filename = Path(filename).name
+    if not safe_filename:
+        return error_response("Product image not found", 404)
+
+    image_path = PRODUCT_IMAGE_DIR / safe_filename
+    if not image_path.exists():
+        return error_response("Product image not found", 404)
+    return send_from_directory(str(PRODUCT_IMAGE_DIR), safe_filename)

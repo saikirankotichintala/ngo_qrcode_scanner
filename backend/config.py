@@ -20,8 +20,17 @@ FALLBACK_FRONTEND_BASE_URL = "http://127.0.0.1:8000"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip() or "llama-3.1-8b-instant"
 
-QR_DIR = BASE_DIR / "qr"
-QR_DIR.mkdir(exist_ok=True)
+PERSISTENT_DATA_DIR = os.getenv("PERSISTENT_DATA_DIR", "").strip()
+_configured_data_root = Path(PERSISTENT_DATA_DIR).expanduser() if PERSISTENT_DATA_DIR else BASE_DIR
+try:
+    _configured_data_root.mkdir(parents=True, exist_ok=True)
+    DATA_ROOT = _configured_data_root
+except OSError:
+    DATA_ROOT = BASE_DIR
+    DATA_ROOT.mkdir(parents=True, exist_ok=True)
 
-PRODUCT_IMAGE_DIR = BASE_DIR / "product_images"
-PRODUCT_IMAGE_DIR.mkdir(exist_ok=True)
+QR_DIR = DATA_ROOT / "qr"
+QR_DIR.mkdir(parents=True, exist_ok=True)
+
+PRODUCT_IMAGE_DIR = DATA_ROOT / "product_images"
+PRODUCT_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
