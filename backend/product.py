@@ -141,7 +141,10 @@ def create_bag():
     bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
     qr_filename = f"{bag_id}.png"
     qr_file_path = QR_DIR / qr_filename
-    qrcode.make(bag_url).save(qr_file_path)
+    try:
+        qrcode.make(bag_url).save(qr_file_path)
+    except OSError:
+        pass
 
     return (
         jsonify(

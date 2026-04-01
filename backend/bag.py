@@ -1,9 +1,10 @@
+import io
 import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
 import qrcode
-from flask import Blueprint, jsonify, request, send_from_directory
+from flask import Blueprint, jsonify, request, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 
 from config import PRODUCT_IMAGE_DIR, QR_DIR
@@ -152,15 +153,27 @@ def serve_qr(filename):
     if Path(safe_filename).suffix.lower() != ".png":
         return error_response("QR file not found", 404)
 
+    bag_id = Path(safe_filename).stem
+    bag = bags_collection.find_one({"id": bag_id}, {"_id": 0, "id": 1})
+    if not bag:
+        return error_response("QR file not found", 404)
+
     qr_path = QR_DIR / safe_filename
-    if not qr_path.exists():
-        bag_id = Path(safe_filename).stem
-        bag = bags_collection.find_one({"id": bag_id}, {"_id": 0, "id": 1})
-        if not bag:
-            return error_response("QR file not found", 404)
+    if qr_path.exists():
+        return send_from_directory(str(QR_DIR), safe_filename)
 
-        frontend_base_url = infer_frontend_base_url()
-        bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
-        qrcode.make(bag_url).save(qr_path)
+    frontend_base_url = infer_frontend_base_url()
+    bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
+    qr_image = qrcode.make(bag_url)
 
-    return send_from_directory(str(QR_DIR), safe_filename)
+    # Try to persist QR for future requests, but never fail the request if disk write fails.
+    try:
+        qr_image.save(qr_path)
+    except OSError:
+        pass
+
+    image_bytes = io.BytesIO()
+    qr_image.save(image_bytes, format="PNG")
+    image_bytes.seek(0)
+
+    return send_file(image_bytes, mimetype="image/png")
