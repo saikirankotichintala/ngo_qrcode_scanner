@@ -695,6 +695,19 @@ body.bag-page::after {
     margin-bottom: 10px;
 }
 
+.bag-hero-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px;
+    border-radius: 16px;
+    border: 1px solid #d5e8d9;
+    background: #fff;
+    padding: 8px;
+    box-shadow: 0 8px 14px rgba(21, 87, 43, 0.12);
+}
+
 .bag-kicker {
     margin: 0;
     text-transform: uppercase;
@@ -709,6 +722,29 @@ body.bag-page::after {
     max-width: 640px;
 }
 
+.bag-donate-chip {
+    margin: 8px auto 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 79, 79, 0.22);
+    background: linear-gradient(130deg, #fff7f3 0%, #ffece4 100%);
+    color: #8a3f2a;
+    font-size: 0.83rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 8px 14px rgba(145, 63, 40, 0.12);
+}
+
+.bag-donate-icon {
+    width: 14px;
+    height: 14px;
+    fill: #cf4f43;
+    flex: 0 0 auto;
+}
+
 .bag-card .status {
     text-align: center;
     margin: 10px 0 16px;
@@ -720,7 +756,7 @@ body.bag-page::after {
     gap: 12px;
     grid-template-columns: minmax(0, 1fr) minmax(240px, 0.9fr);
     grid-template-areas:
-        "bagid image"
+        "name image"
         "maker image"
         "material image"
         "story story";
@@ -792,8 +828,8 @@ body.bag-page::after {
     overflow-wrap: anywhere;
 }
 
-.bag-meta-id {
-    grid-area: bagid;
+.bag-meta-name {
+    grid-area: name;
 }
 
 .bag-meta-maker {
@@ -806,6 +842,23 @@ body.bag-page::after {
 
 .bag-story {
     grid-area: story;
+}
+
+.bag-story-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bag-story-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid #d5e8d9;
+    background: #fff;
+    padding: 4px;
+    box-shadow: 0 6px 12px rgba(21, 87, 43, 0.12);
 }
 
 .bag-product-image {
@@ -1312,7 +1365,7 @@ body.bag-page::after {
     .bag-detail-grid {
         grid-template-columns: 1fr;
         grid-template-areas:
-            "bagid"
+            "name"
             "maker"
             "material"
             "image"

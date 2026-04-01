@@ -10,6 +10,10 @@ function getMakerNamesText(bag) {
   return bag?.maker_name || "-";
 }
 
+function getBagNameText(bag) {
+  return bag?.product_name || bag?.bag_name || "Handmade Bag";
+}
+
 function getEmployeeStoryText(bag) {
   if (Array.isArray(bag?.employee_profiles) && bag.employee_profiles.length) {
     return bag.employee_profiles
@@ -82,19 +86,32 @@ export default function BagPage() {
     <main className="page bag-layout">
       <section className={`card bag-card${isLoading ? " is-loading" : ""}${isLoaded ? " is-loaded" : ""}`}>
         <div className="bag-hero">
+          <img className="bag-hero-logo" src="/ngo-logo.png" alt="NGO logo" loading="eager" />
           <p className="bag-kicker">NGO Impact Trace</p>
           <h1>Bag Story Card</h1>
           <p className="subtitle bag-subtitle">
             <em>Every handmade bag carries a story of dignity, effort, and hope.</em>
           </p>
+          <div className="bag-donate-chip" aria-label="Support this mission through donation">
+            <svg
+              className="bag-donate-icon"
+              viewBox="0 0 24 24"
+              role="img"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 0 1 6.5 4 5 5 0 0 1 12 7.09 5 5 0 0 1 17.5 4 4.5 4.5 0 0 1 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" />
+            </svg>
+            <span>Support This Work</span>
+          </div>
         </div>
 
         <p className={`status${statusType ? ` status-${statusType}` : ""}`}>{statusMessage}</p>
 
         <div className="bag-detail-grid">
-          <article className="bag-detail bag-meta-id">
-            <p className="bag-label">Bag ID</p>
-            <p className="bag-value">{bag?.id || "-"}</p>
+          <article className="bag-detail bag-meta-name">
+            <p className="bag-label">Bag Name</p>
+            <p className="bag-value">{getBagNameText(bag)}</p>
           </article>
 
           <article className="bag-detail bag-meta-maker">
@@ -118,7 +135,10 @@ export default function BagPage() {
           </article>
 
           <article className="bag-detail bag-story">
-            <p className="bag-label">Employee Story</p>
+            <div className="bag-story-header">
+              <img className="bag-story-logo" src="/ngo-logo.png" alt="NGO logo" loading="lazy" />
+              <p className="bag-label">Employee Story</p>
+            </div>
             <p className="bag-story-text">{getEmployeeStoryText(bag)}</p>
           </article>
         </div>

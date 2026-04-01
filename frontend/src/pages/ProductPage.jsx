@@ -62,6 +62,7 @@ async function buildOfflineProductItem(payload, selectedImageFile) {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     payload: {
       employee_ids: payload.employee_ids.slice(),
+      product_name: payload.product_name,
       material_used: payload.material_used
     },
     image_name: "",
@@ -87,6 +88,7 @@ function buildProductFormData(payload, selectedImageFile) {
   payload.employee_ids.forEach((employeeId) => {
     formData.append("employee_ids", employeeId);
   });
+  formData.append("product_name", payload.product_name);
   formData.append("material_used", payload.material_used);
 
   if (selectedImageFile) {
@@ -104,6 +106,7 @@ async function buildFormDataFromQueuedProduct(queuedItem) {
   employeeIds.forEach((employeeId) => {
     formData.append("employee_ids", employeeId);
   });
+  formData.append("product_name", String(payload.product_name || "").trim());
   formData.append("material_used", String(payload.material_used || "").trim());
 
   if (queuedItem.image_data_url) {
@@ -187,6 +190,7 @@ export default function ProductPage() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
+  const [productName, setProductName] = useState("");
   const [materialUsed, setMaterialUsed] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("");
@@ -432,6 +436,7 @@ export default function ProductPage() {
 
   function resetFormState() {
     setSelectedEmployeeIds([]);
+    setProductName("");
     setMaterialUsed("");
     setGalleryFile(null);
     setCameraFallbackFile(null);
@@ -445,11 +450,12 @@ export default function ProductPage() {
 
     const payload = {
       employee_ids: selectedEmployeeIds.filter(Boolean),
+      product_name: productName.trim(),
       material_used: materialUsed.trim()
     };
 
-    if (!payload.employee_ids.length || !payload.material_used) {
-      setStatus("Please select at least one employee and material.", "error");
+    if (!payload.employee_ids.length || !payload.product_name || !payload.material_used) {
+      setStatus("Please select employees and fill bag name and material.", "error");
       return;
     }
 
@@ -611,6 +617,16 @@ export default function ProductPage() {
             ))}
           </select>
           <p className="muted helper-text">Select one or more employees who made this bag.</p>
+
+          <label htmlFor="productName">Bag Name</label>
+          <input
+            id="productName"
+            type="text"
+            placeholder="Eco Tote, Daily Carry, Travel Sling..."
+            value={productName}
+            onChange={(event) => setProductName(event.target.value)}
+            required
+          />
 
           <label htmlFor="materialUsed">Material Used</label>
           <input

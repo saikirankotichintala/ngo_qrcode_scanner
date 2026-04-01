@@ -72,6 +72,7 @@ def get_unique_employee_ids(data):
 def create_bag():
     data = parse_request_data()
 
+    product_name = clean_text(data.get("product_name") or data.get("bag_name"))
     material_used = clean_text(data.get("material_used"))
     employee_ids = get_unique_employee_ids(data)
     maker_name = clean_text(data.get("maker_name"))
@@ -119,6 +120,7 @@ def create_bag():
     bag_id = str(uuid.uuid4())
     bag = {
         "id": bag_id,
+        "product_name": product_name or "Handmade Bag",
         "employee_id": employee_ids[0] if employee_ids else "",
         "employee_ids": employee_ids,
         "maker_name": maker_name,
