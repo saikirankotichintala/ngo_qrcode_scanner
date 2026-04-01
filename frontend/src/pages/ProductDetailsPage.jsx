@@ -48,6 +48,16 @@ export default function ProductDetailsPage() {
     setStatusType(type);
   }, []);
 
+  const handleSelectQrBag = useCallback(
+    (bag) => {
+      setSelectedQrBag(bag);
+      setQrAnimationSeed((previousSeed) => previousSeed + 1);
+      setIsQrPreviewBroken(false);
+      setStatus("QR loaded for selected product.", "success");
+    },
+    [setStatus]
+  );
+
   const filteredProducts = useMemo(() => {
     const searchQuery = productSearchText.trim().toLowerCase();
     const fromBoundary = parseDateInputBoundary(productFromDate, false);
@@ -297,7 +307,9 @@ export default function ProductDetailsPage() {
           </button>
         </div>
 
-        <p className="muted helper-text">Click a product photo to view its QR code.</p>
+        <p className="muted helper-text">
+          Click a product photo or View QR to preview its QR code.
+        </p>
 
         <div className="table-wrap">
           <table className="admin-table">
@@ -326,12 +338,7 @@ export default function ProductDetailsPage() {
                       <button
                         type="button"
                         className="photo-thumb-btn"
-                        onClick={() => {
-                          setSelectedQrBag(bag);
-                          setQrAnimationSeed((previousSeed) => previousSeed + 1);
-                          setIsQrPreviewBroken(false);
-                          setStatus("QR loaded for selected product.", "success");
-                        }}
+                        onClick={() => handleSelectQrBag(bag)}
                       >
                         <img
                           className="table-product-photo"
@@ -346,7 +353,13 @@ export default function ProductDetailsPage() {
                         />
                       </button>
                     ) : (
-                      <span className="muted">No image</span>
+                      <button
+                        type="button"
+                        className="secondary action-btn"
+                        onClick={() => handleSelectQrBag(bag)}
+                      >
+                        View QR
+                      </button>
                     )}
                   </td>
                   <td className="mono-text">{bag.id || "-"}</td>
