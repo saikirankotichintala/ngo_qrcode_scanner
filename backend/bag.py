@@ -2,12 +2,20 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
+import qrcode
 from flask import Blueprint, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 
 from config import PRODUCT_IMAGE_DIR, QR_DIR
 from db import bags_collection
-from helpers import clean_text, error_response, infer_api_base_url, parse_request_data, require_admin
+from helpers import (
+    clean_text,
+    error_response,
+    infer_api_base_url,
+    infer_frontend_base_url,
+    parse_request_data,
+    require_admin,
+)
 
 bag_bp = Blueprint("bag", __name__)
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -41,12 +49,21 @@ def get_image_name_from_url(image_url):
     return Path(parsed.path).name
 
 
+def normalize_product_image_url(image_url):
+    image_name = get_image_name_from_url(image_url)
+    if not image_name:
+        return ""
+    api_base_url = infer_api_base_url()
+    return f"{api_base_url}/product-image/{image_name}"
+
+
 def sanitize_bag_response(bag):
     if not bag:
         return bag
 
     bag.pop("status", None)
     bag.pop("sold_at", None)
+    bag["product_image_url"] = normalize_product_image_url(bag.get("product_image_url"))
     return bag
 
 
@@ -131,4 +148,19 @@ def delete_bag(bag_id):
 
 @bag_bp.route("/qr/<path:filename>", methods=["GET"])
 def serve_qr(filename):
-    return send_from_directory(str(QR_DIR), filename)
+    safe_filename = Path(filename).name
+    if Path(safe_filename).suffix.lower() != ".png":
+        return error_response("QR file not found", 404)
+
+    qr_path = QR_DIR / safe_filename
+    if not qr_path.exists():
+        bag_id = Path(safe_filename).stem
+        bag = bags_collection.find_one({"id": bag_id}, {"_id": 0, "id": 1})
+        if not bag:
+            return error_response("QR file not found", 404)
+
+        frontend_base_url = infer_frontend_base_url()
+        bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
+        qrcode.make(bag_url).save(qr_path)
+
+    return send_from_directory(str(QR_DIR), safe_filename)
