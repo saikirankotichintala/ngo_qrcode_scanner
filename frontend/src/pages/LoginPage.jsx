@@ -40,8 +40,8 @@ export default function LoginPage() {
       <section className="card">
         <img
           className="logo"
-          src="/assets/logo.png"
-          alt="Amarswaroop Foundation logo"
+          src="/ngo-logo.png"
+          alt="NGO logo"
           onError={(event) => {
             event.currentTarget.style.display = "none";
           }}
