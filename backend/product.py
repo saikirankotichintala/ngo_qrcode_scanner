@@ -1,8 +1,14 @@
+import base64
+import binascii
+import io
+import mimetypes
+import re
 import uuid
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 import qrcode
-from flask import Blueprint, jsonify, request, send_from_directory
+from flask import Blueprint, jsonify, request, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 
 from config import PRODUCT_IMAGE_DIR, QR_DIR
@@ -19,7 +25,48 @@ from helpers import (
 
 product_bp = Blueprint("product", __name__)
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MIME_TYPE_TO_EXTENSION = {
+    "image/jpg": ".jpg",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
 MAX_PRODUCT_IMAGE_BYTES = 8 * 1024 * 1024
+
+
+def get_image_extension_from_upload(image_file, original_filename):
+    extension = Path(original_filename).suffix.lower()
+    if extension in ALLOWED_IMAGE_EXTENSIONS:
+        return extension
+
+    mime_type = clean_text(image_file.mimetype).lower()
+    return MIME_TYPE_TO_EXTENSION.get(mime_type, "")
+
+
+def normalize_filename(value):
+    text = clean_text(value)
+    if not text:
+        return ""
+    return Path(unquote(text)).name
+
+
+def build_product_image_lookup_query(filename):
+    encoded_filename = quote(filename, safe="")
+    patterns = {
+        rf"/product-image/{re.escape(filename)}(?:$|[?#])",
+        rf"/product-image/{re.escape(encoded_filename)}(?:$|[?#])",
+        rf"/product_images/{re.escape(filename)}(?:$|[?#])",
+        rf"/product_images/{re.escape(encoded_filename)}(?:$|[?#])",
+        rf"{re.escape(filename)}(?:$|[?#])",
+        rf"{re.escape(encoded_filename)}(?:$|[?#])",
+    }
+
+    query_filters = [{"product_image_name": filename}]
+    query_filters.extend(
+        {"product_image_url": {"$regex": pattern, "$options": "i"}} for pattern in patterns
+    )
+    return {"$or": query_filters}
 
 
 def save_product_image():
@@ -28,11 +75,12 @@ def save_product_image():
         return None, None
 
     original_filename = secure_filename(image_file.filename or "")
-    extension = Path(original_filename).suffix.lower()
+    extension = get_image_extension_from_upload(image_file, original_filename)
 
-    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+    if not extension:
         return None, error_response(
-            "Invalid product image type. Allowed: jpg, jpeg, png, webp, gif"
+            "Invalid product image type. Allowed: jpg, jpeg, png, webp, gif "
+            "(or matching image MIME type)"
         )
 
     image_bytes = image_file.read()
@@ -47,11 +95,46 @@ def save_product_image():
     try:
         image_path.write_bytes(image_bytes)
     except OSError:
-        return None, error_response(
-            "Unable to save product image on server. Check persistent disk setup."
-        )
+        # Local disk can be ephemeral or unavailable in serverless hosts.
+        # We still persist bytes in MongoDB and serve from there as fallback.
+        pass
 
-    return image_filename, None
+    mime_type = clean_text(image_file.mimetype).lower()
+
+    return {
+        "filename": image_filename,
+        "data": image_bytes,
+        "mime_type": (
+            mime_type
+            if mime_type.startswith("image/")
+            else guess_image_mime_type(image_filename, mime_type)
+        ),
+    }, None
+
+
+def guess_image_mime_type(filename, stored_mime_type=""):
+    mime_type = clean_text(stored_mime_type)
+    if mime_type.startswith("image/"):
+        return mime_type
+
+    guessed_type, _ = mimetypes.guess_type(filename)
+    if guessed_type and guessed_type.startswith("image/"):
+        return guessed_type
+
+    return "application/octet-stream"
+
+
+def decode_image_data(value):
+    if isinstance(value, (bytes, bytearray)):
+        return bytes(value)
+
+    if isinstance(value, str):
+        try:
+            return base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error):
+            return b""
+
+    return b""
 
 
 def get_unique_employee_ids(data):
@@ -126,13 +209,14 @@ def create_bag():
         for profile in employee_profiles
     )
 
-    image_filename, image_error = save_product_image()
+    image_asset, image_error = save_product_image()
     if image_error:
         return image_error
 
     api_base_url = infer_api_base_url()
     bag_id = str(uuid.uuid4())
-    bag = {
+    image_filename = image_asset["filename"] if image_asset else ""
+    bag_record = {
         "id": bag_id,
         "product_name": product_name or "Handmade Bag",
         "employee_id": employee_ids[0] if employee_ids else "",
@@ -143,14 +227,24 @@ def create_bag():
         "employee_profiles": employee_profiles,
         "material_used": material_used,
         "product_image_url": (
-            f"{api_base_url}/product-image/{image_filename}" if image_filename else ""
+            f"{api_base_url}/product-image/{quote(image_filename, safe='')}"
+            if image_filename
+            else ""
         ),
         "product_image_name": image_filename,
         "created_at": utc_now(),
     }
+    if image_asset:
+        bag_record["product_image_data"] = image_asset["data"]
+        bag_record["product_image_mime_type"] = image_asset["mime_type"]
 
     # Insert a copy because PyMongo mutates inserted dict with _id (ObjectId).
-    bags_collection.insert_one(dict(bag))
+    bags_collection.insert_one(dict(bag_record))
+
+    bag_response = dict(bag_record)
+    bag_response.pop("product_image_data", None)
+    bag_response.pop("product_image_mime_type", None)
+    bag_response.pop("product_image_name", None)
 
     frontend_base_url = infer_frontend_base_url()
     bag_url = f"{frontend_base_url}/#/bag?id={bag_id}"
@@ -165,7 +259,7 @@ def create_bag():
         jsonify(
             {
                 "message": "Bag created",
-                "bag": bag,
+                "bag": bag_response,
                 "bag_url": bag_url,
                 "qr_code_url": f"{api_base_url}/qr/{qr_filename}",
             }
@@ -176,11 +270,55 @@ def create_bag():
 
 @product_bp.route("/product-image/<path:filename>", methods=["GET"])
 def serve_product_image(filename):
-    safe_filename = Path(filename).name
+    safe_filename = normalize_filename(filename)
     if not safe_filename:
         return error_response("Product image not found", 404)
 
     image_path = PRODUCT_IMAGE_DIR / safe_filename
-    if not image_path.exists():
+    bag = bags_collection.find_one(
+        build_product_image_lookup_query(safe_filename),
+        {
+            "_id": 1,
+            "product_image_name": 1,
+            "product_image_data": 1,
+            "product_image_mime_type": 1,
+        },
+    )
+
+    if bag and not clean_text(bag.get("product_image_name")):
+        bags_collection.update_one(
+            {"_id": bag["_id"]},
+            {"$set": {"product_image_name": safe_filename}},
+        )
+        bag["product_image_name"] = safe_filename
+
+    if image_path.exists():
+        if bag and not bag.get("product_image_data"):
+            try:
+                image_bytes = image_path.read_bytes()
+            except OSError:
+                image_bytes = b""
+            if image_bytes:
+                bags_collection.update_one(
+                    {"_id": bag["_id"]},
+                    {
+                        "$set": {
+                            "product_image_data": image_bytes,
+                            "product_image_mime_type": guess_image_mime_type(
+                                safe_filename, bag.get("product_image_mime_type")
+                            ),
+                        }
+                    },
+                )
+        return send_from_directory(str(PRODUCT_IMAGE_DIR), safe_filename)
+
+    image_bytes = decode_image_data((bag or {}).get("product_image_data"))
+    if not image_bytes:
         return error_response("Product image not found", 404)
-    return send_from_directory(str(PRODUCT_IMAGE_DIR), safe_filename)
+
+    return send_file(
+        io.BytesIO(image_bytes),
+        mimetype=guess_image_mime_type(
+            safe_filename, (bag or {}).get("product_image_mime_type")
+        ),
+    )

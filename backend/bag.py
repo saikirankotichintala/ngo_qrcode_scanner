@@ -1,7 +1,7 @@
 import io
 import uuid
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, unquote, urlparse
 
 import qrcode
 from flask import Blueprint, jsonify, request, send_file, send_from_directory
@@ -20,6 +20,13 @@ from helpers import (
 
 bag_bp = Blueprint("bag", __name__)
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MIME_TYPE_TO_EXTENSION = {
+    "image/jpg": ".jpg",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
 MAX_PRODUCT_IMAGE_BYTES = 8 * 1024 * 1024
 BAG_PUBLIC_PROJECTION = {"_id": 0, "product_image_data": 0, "product_image_mime_type": 0}
 
@@ -29,13 +36,23 @@ def delete_file_if_exists(path: Path):
         path.unlink()
 
 
+def get_image_extension_from_upload(image_file, original_filename):
+    extension = Path(original_filename).suffix.lower()
+    if extension in ALLOWED_IMAGE_EXTENSIONS:
+        return extension
+
+    mime_type = clean_text(image_file.mimetype).lower()
+    return MIME_TYPE_TO_EXTENSION.get(mime_type, "")
+
+
 def save_updated_product_image(image_file):
     original_filename = secure_filename(image_file.filename or "")
-    extension = Path(original_filename).suffix.lower()
+    extension = get_image_extension_from_upload(image_file, original_filename)
 
-    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+    if not extension:
         return None, error_response(
-            "Invalid product image type. Allowed: jpg, jpeg, png, webp, gif"
+            "Invalid product image type. Allowed: jpg, jpeg, png, webp, gif "
+            "(or matching image MIME type)"
         )
 
     image_bytes = image_file.read()
@@ -50,11 +67,17 @@ def save_updated_product_image(image_file):
     try:
         image_path.write_bytes(image_bytes)
     except OSError:
-        return None, error_response(
-            "Unable to save product image on server. Check persistent disk setup."
-        )
+        # Local disk can be ephemeral or unavailable in serverless hosts.
+        # We still persist bytes in MongoDB and serve from there as fallback.
+        pass
 
-    return image_filename, None
+    mime_type = clean_text(image_file.mimetype).lower()
+
+    return {
+        "filename": image_filename,
+        "data": image_bytes,
+        "mime_type": mime_type if mime_type.startswith("image/") else "application/octet-stream",
+    }, None
 
 
 def get_image_name_from_url(image_url):
@@ -62,7 +85,7 @@ def get_image_name_from_url(image_url):
     if not image_text:
         return ""
     parsed = urlparse(image_text)
-    return Path(parsed.path).name
+    return Path(unquote(parsed.path)).name
 
 
 def normalize_product_image_url(image_url, image_name=""):
@@ -71,7 +94,7 @@ def normalize_product_image_url(image_url, image_name=""):
     if not image_name:
         return ""
     api_base_url = infer_api_base_url()
-    return f"{api_base_url}/product-image/{image_name}"
+    return f"{api_base_url}/product-image/{quote(image_name, safe='')}"
 
 
 def sanitize_bag_response(bag):
@@ -128,12 +151,14 @@ def update_bag(bag_id):
     new_image_filename = ""
     image_file = request.files.get("product_image")
     if image_file:
-        new_image_filename, image_error = save_updated_product_image(image_file)
+        image_asset, image_error = save_updated_product_image(image_file)
         if image_error:
             return image_error
-        api_base_url = infer_api_base_url()
-        updates["product_image_url"] = f"{api_base_url}/product-image/{new_image_filename}"
+        new_image_filename = image_asset["filename"]
+        updates["product_image_url"] = normalize_product_image_url("", new_image_filename)
         updates["product_image_name"] = new_image_filename
+        updates["product_image_data"] = image_asset["data"]
+        updates["product_image_mime_type"] = image_asset["mime_type"]
 
     if not updates:
         return error_response("Provide at least one field to update: material_used or product_image")
