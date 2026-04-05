@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../lib/api";
+import { NGO_LOGO_URL } from "../lib/assets";
+import { resolveProductImageUrl } from "../lib/media";
 import { parseResponse } from "../lib/network";
 
 function getMakerNamesText(bag) {
@@ -27,6 +29,25 @@ function getEmployeeStoryText(bag) {
   return bag?.employee_story || "-";
 }
 
+const HINDI_TRANSLATE_BASE_URL =
+  "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q=";
+
+function extractTranslatedText(payload) {
+  if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
+    return "";
+  }
+
+  return payload[0]
+    .map((segment) => {
+      if (!Array.isArray(segment)) {
+        return "";
+      }
+      return String(segment[0] || "");
+    })
+    .join("")
+    .trim();
+}
+
 export default function BagPage() {
   const location = useLocation();
   const [bag, setBag] = useState(null);
@@ -35,11 +56,24 @@ export default function BagPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isProductImageBroken, setIsProductImageBroken] = useState(false);
+  const [isHindiVisible, setIsHindiVisible] = useState(false);
+  const [translatedStoryText, setTranslatedStoryText] = useState("");
+  const [isTranslatingStory, setIsTranslatingStory] = useState(false);
 
   const bagId = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return (params.get("id") || "").trim();
   }, [location.search]);
+  const productImageUrl = useMemo(
+    () => resolveProductImageUrl(bag?.product_image_url),
+    [bag?.product_image_url]
+  );
+  const originalStoryText = useMemo(() => getEmployeeStoryText(bag), [bag]);
+  const canTranslateStory = useMemo(
+    () => Boolean(originalStoryText && originalStoryText !== "-"),
+    [originalStoryText]
+  );
+  const displayedStoryText = isHindiVisible && translatedStoryText ? translatedStoryText : originalStoryText;
 
   useEffect(() => {
     document.body.classList.add("bag-page");
@@ -87,11 +121,73 @@ export default function BagPage() {
     setIsProductImageBroken(false);
   }, [bag?.id, bag?.product_image_url]);
 
+  useEffect(() => {
+    setIsHindiVisible(false);
+    setTranslatedStoryText("");
+    setIsTranslatingStory(false);
+  }, [bag?.id, originalStoryText]);
+
+  const handleAutoTranslateToHindi = useCallback(async () => {
+    if (!canTranslateStory) {
+      setStatusMessage("No story text available to translate.");
+      setStatusType("warning");
+      return;
+    }
+
+    if (translatedStoryText) {
+      setIsHindiVisible((previousValue) => !previousValue);
+      return;
+    }
+
+    if (!window.navigator.onLine) {
+      setStatusMessage("Auto translate to Hindi works only with internet.");
+      setStatusType("warning");
+      return;
+    }
+
+    setIsTranslatingStory(true);
+    setStatusMessage("Translating story to Hindi...");
+    setStatusType("info");
+
+    try {
+      const response = await fetch(
+        `${HINDI_TRANSLATE_BASE_URL}${encodeURIComponent(originalStoryText)}`,
+        { cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Translation failed with status ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const translatedText = extractTranslatedText(payload);
+
+      if (!translatedText) {
+        throw new Error("Translation response is empty");
+      }
+
+      setTranslatedStoryText(translatedText);
+      setIsHindiVisible(true);
+      setStatusMessage("Story translated to Hindi.");
+      setStatusType("success");
+    } catch (error) {
+      if (!window.navigator.onLine) {
+        setStatusMessage("Auto translate to Hindi works only with internet.");
+        setStatusType("warning");
+      } else {
+        setStatusMessage("Could not translate the story right now. Please try again.");
+        setStatusType("error");
+      }
+    } finally {
+      setIsTranslatingStory(false);
+    }
+  }, [canTranslateStory, originalStoryText, translatedStoryText]);
+
   return (
     <main className="page bag-layout">
       <section className={`card bag-card${isLoading ? " is-loading" : ""}${isLoaded ? " is-loaded" : ""}`}>
         <div className="bag-hero">
-          <img className="bag-hero-logo" src="/ngo-logo.png" alt="NGO logo" loading="eager" />
+          <img className="bag-hero-logo" src={NGO_LOGO_URL} alt="NGO logo" loading="eager" />
           <p className="bag-kicker">NGO Impact Trace</p>
           <h1>Bag Story Card</h1>
           <p className="subtitle bag-subtitle">
@@ -133,25 +229,54 @@ export default function BagPage() {
             <p className="bag-label">Product Preview</p>
             <img
               className={`bag-product-image-preview${
-                bag?.product_image_url && !isProductImageBroken ? "" : " hidden"
+                productImageUrl && !isProductImageBroken ? "" : " hidden"
               }`}
-              src={bag?.product_image_url || undefined}
+              src={productImageUrl || undefined}
               alt="Product"
               onError={() => {
                 setIsProductImageBroken(true);
               }}
             />
-            {(!bag?.product_image_url || isProductImageBroken) && (
+            {(!productImageUrl || isProductImageBroken) && (
               <p className="muted">No product image available.</p>
             )}
           </article>
 
           <article className="bag-detail bag-story">
             <div className="bag-story-header">
-              <img className="bag-story-logo" src="/ngo-logo.png" alt="NGO logo" loading="lazy" />
+              <img className="bag-story-logo" src={NGO_LOGO_URL} alt="NGO logo" loading="lazy" />
               <p className="bag-label">Employee Story</p>
             </div>
-            <p className="bag-story-text">{getEmployeeStoryText(bag)}</p>
+            <div className="bag-story-tools">
+              <button
+                type="button"
+                className="bag-translate-btn secondary"
+                onClick={handleAutoTranslateToHindi}
+                disabled={!canTranslateStory || isTranslatingStory}
+                aria-label="Auto translate employee story to Hindi"
+              >
+                <svg
+                  className="bag-translate-icon"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M3 6h11v2h-1.7c-.3 1.8-1 3.5-1.9 4.8.9.7 2 1.3 3.3 1.8l-.8 1.8c-1.5-.6-2.8-1.3-3.9-2.2a12 12 0 0 1-3.9 2.2l-.8-1.8c1.3-.5 2.4-1.1 3.3-1.8-.9-1.3-1.6-3-1.9-4.8H3V6zm3.4 2c.2 1.3.7 2.6 1.5 3.7.8-1.1 1.3-2.4 1.5-3.7H6.4zM16 5h2l3 8h-2l-.6-1.8h-3L14.8 13h-2L16 5zm-.1 4.4h2L17 6.9l-1.1 2.5zM14 15h7v2h-7v-2zm0 3h7v2h-7v-2z" />
+                </svg>
+                <span>
+                  {isTranslatingStory
+                    ? "Translating..."
+                    : isHindiVisible
+                    ? "Show Original Story"
+                    : translatedStoryText
+                    ? "Show Hindi Translation"
+                    : "Auto Translate Hindi"}
+                </span>
+              </button>
+              <p className="bag-translate-hint">Auto translate to Hindi works only with internet.</p>
+            </div>
+            <p className="bag-story-text">{displayedStoryText}</p>
           </article>
         </div>
       </section>

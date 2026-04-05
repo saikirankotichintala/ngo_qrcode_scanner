@@ -858,6 +858,42 @@ body.bag-page::after {
     gap: 10px;
 }
 
+.bag-story-tools {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.bag-translate-btn {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    box-shadow: 0 8px 14px rgba(18, 71, 39, 0.16);
+}
+
+.bag-translate-btn:hover {
+    box-shadow: 0 10px 16px rgba(18, 71, 39, 0.2);
+}
+
+.bag-translate-icon {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    flex: 0 0 auto;
+}
+
+.bag-translate-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #5b6f61;
+}
+
 .bag-story-logo {
     width: 40px;
     height: 40px;
@@ -1378,6 +1414,11 @@ body.bag-page::after {
             "material"
             "image"
             "story";
+    }
+
+    .bag-story-tools {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
 
